@@ -1,6 +1,5 @@
 package com.bibek.financeTracker.service;
 
-
 import com.bibek.financeTracker.dto.ExpenseDto;
 import com.bibek.financeTracker.entity.CategoryEntity;
 import com.bibek.financeTracker.entity.ExpenseEntity;
@@ -32,7 +31,6 @@ public class ExpenseService {
         return toDTO(newExpense);
     }
 
-
     //Retrieve all exprenses for the based on the start and end date
     public List<ExpenseDto> getCurrentMonthExpensesForCurrentUser(){
         ProfileEntity profile = profileService.getCurrentProfile();
@@ -43,7 +41,6 @@ public class ExpenseService {
                 (profile.getId(), startDate, endDate);
         return expenses.stream().map(this::toDTO).toList();
     }
-
 
     //Delete Expense by id
     public void deleteExpense(Long expenseId){
@@ -71,7 +68,6 @@ public class ExpenseService {
         return total != null ? total : BigDecimal.ZERO;
     }
 
-
     //filter messages
     public List<ExpenseDto> filterExpenses(LocalDate startDate, LocalDate endDate, String keyword, Sort sort){
         ProfileEntity profile = profileService.getCurrentProfile();
@@ -81,8 +77,21 @@ public class ExpenseService {
         return expenses.stream().map(this::toDTO).toList();
     }
 
+    // FIXED: For scheduled tasks - uses the provided profileId instead of security context
+    public List<ExpenseDto> getExpensesForUserOnDate(Long profileId, LocalDate date){
+        // Use the provided profileId directly without trying to get current profile
+        List<ExpenseEntity> expenses = expenseRepository.findByProfileIdAndDate(profileId, date);
+        return expenses.stream().map(this::toDTO).toList();
+    }
+
+    // Overloaded method for backward compatibility with controllers
+    public List<ExpenseDto> getExpensesForCurrentUserOnDate(LocalDate date){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        return getExpensesForUserOnDate(profile.getId(), date);
+    }
+
     private ExpenseEntity toEntity(ExpenseDto dto, ProfileEntity profile
-    , CategoryEntity category) {
+            , CategoryEntity category) {
         return ExpenseEntity.builder()
                 .name(dto.getName())
                 .icon(dto.getIcon())
@@ -91,7 +100,6 @@ public class ExpenseService {
                 .profile(profile)
                 .category(category)
                 .build();
-
     }
 
     private ExpenseDto toDTO(ExpenseEntity entity) {
@@ -109,5 +117,4 @@ public class ExpenseService {
                 .updatedAt(entity.getUpdatedAt())
                 .build();
     }
-
 }
