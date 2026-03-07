@@ -47,7 +47,7 @@ public class NotificationService {
         }
     }
 
-    @Scheduled(cron = "0 * * * * *", zone = "Asia/Kathmandu")
+//    @Scheduled(cron = "0 * * * * *", zone = "Asia/Kathmandu")
     public void sendDailyExpenseSummaryEmail(){
         log.info("Job started: sendDailyExpenseSummary()");
         List<ProfileEntity> profiles = profileRepository.findAll();
