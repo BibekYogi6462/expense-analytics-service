@@ -9,8 +9,10 @@ import com.bibek.financeTracker.entity.ProfileEntity;
 import com.bibek.financeTracker.repository.CategoryRepository;
 import com.bibek.financeTracker.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -46,6 +48,15 @@ public class IncomeService {
         incomeRepository.delete(expense);
     }
 
+    //filter messages
+    public List<IncomeDto> filterIncomes(LocalDate startDate, LocalDate endDate, String keyword, Sort sort){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<IncomeEntity> expenses = incomeRepository
+                .findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(),
+                        startDate, endDate, keyword, sort);
+        return expenses.stream().map(this::toDTO).toList();
+    }
+
 
     //Retrieve all exprenses for the based on the start and end date
     public List<IncomeDto> getCurrentMonthIncomesForCurrentUser(){
@@ -58,6 +69,19 @@ public class IncomeService {
         return expenses.stream().map(this::toDTO).toList();
     }
 
+    //Get latest 5 expenses for the current user
+    public List<IncomeDto> getLatest5IncomesForCurrentUser(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<IncomeEntity> income = incomeRepository.findTop5ByProfileIdOrderByDateDesc(profile.getId());
+        return income.stream().map(this::toDTO).toList();
+    }
+
+    //Get total expenses for the current user
+    public BigDecimal getTotalIncomesForCurrentUser(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        BigDecimal total =  incomeRepository.findTotalExpenseByProfileId(profile.getId());
+        return total != null ? total : BigDecimal.ZERO;
+    }
 
 
     private IncomeEntity toEntity(IncomeDto dto, ProfileEntity profile

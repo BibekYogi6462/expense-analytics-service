@@ -8,8 +8,10 @@ import com.bibek.financeTracker.entity.ProfileEntity;
 import com.bibek.financeTracker.repository.CategoryRepository;
 import com.bibek.financeTracker.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -55,7 +57,29 @@ public class ExpenseService {
         expenseRepository.delete(expense);
     }
 
+    //Get latest 5 expenses for the current user
+    public List<ExpenseDto> getLatest5ExpensesForCurrentUser(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<ExpenseEntity> expenses = expenseRepository.findTop5ByProfileIdOrderByDateDesc(profile.getId());
+        return expenses.stream().map(this::toDTO).toList();
+    }
 
+    //Get total expenses for the current user
+    public BigDecimal getTotalExpensesForCurrentUser(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        BigDecimal total =  expenseRepository.findTotalExpenseByProfileId(profile.getId());
+        return total != null ? total : BigDecimal.ZERO;
+    }
+
+
+    //filter messages
+    public List<ExpenseDto> filterExpenses(LocalDate startDate, LocalDate endDate, String keyword, Sort sort){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<ExpenseEntity> expenses = expenseRepository
+                .findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(profile.getId(),
+                        startDate, endDate, keyword, sort);
+        return expenses.stream().map(this::toDTO).toList();
+    }
 
     private ExpenseEntity toEntity(ExpenseDto dto, ProfileEntity profile
     , CategoryEntity category) {
